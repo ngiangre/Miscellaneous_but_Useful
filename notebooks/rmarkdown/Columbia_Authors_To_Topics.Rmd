@@ -1,0 +1,17 @@
+---
+title: "Naive Bayes Classifier of Columbia Authors"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: simplex
+---
+
+# Introduction
+
+##### My goal is to get the most probabilistic author at Columbia given a phrase or topic. I'm going to use both R and python to do this. For the R portion, I'm going to use the package RISMed and draw from [here](http://amunategui.github.io/pubmed-query/). For the python portion I'm going to draw heavily from [here](http://mlbernauer.github.io/R/20160319-naive-bayes-information-retrieval.html).**
+
+# Extracting Pubmed articles from Columbia University
+# Dataset Preprocessing before Classification
+# Naive Bayes Classifier
+# Give me most probable authors for a Topic or Phrase
