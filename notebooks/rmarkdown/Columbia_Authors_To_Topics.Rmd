@@ -4,23 +4,42 @@ output:
   html_document:
     toc: true
     toc_float: true
+    cold_folding: show 
     theme: journal 
     highlight: pygments
 ---
 
+<style>
+
+p {
+
+  color: rgb(96,80,82);
+  font-family: "Palitino";
+  font-size: 130%;
+  padding: 3px;
+  margin: 3px;
+}
+
+</style>
+
+
 # Introduction
 
-**My goal is to get the most probable author at Columbia given a phrase or topic. I'm going to use R to do this, mostly because there's an R package to retrive pubmed information directly from NCBI without needing to download and set a file in a local directory before processing.**
+**It would be really useful to retrieve people with high expertise (publishing record) in an area of research. My goal in this notebook is to get the most probable author at Columbia University in NYC given a phrase or topic. I'm going to use R to do this, mostly because there's an R package to retrive pubmed information directly from NCBI without needing to download and set a file in a local directory before processing.**
 
-**This tutoral's objective is really to help me find committee members for my qualifying exam and thesis. Thus, like any analysis, I'm going to tailor my analysis towards the question at hand. However, I'm going to leave _Notes_ in this tutorial on how you can use the code for your own purposes.**
 
-**There's a couple packages I'm going to  use in this tutorial,**
+**This tutoral will also serve to help me find committee members for my qualifying exam and thesis. Thus, like any analysis, I'm going to tailor my analysis towards the question at hand. However, I'm going to leave notes in this tutorial on how you can use the code for your own purposes.**
+
+
+**There's a couple packages I'm going to use in this tutorial:**
+
 
 * **For the pubmed scraping portion, I'm going to use the package RISMed and draw from [here](http://amunategui.github.io/pubmed-query/). This package is great for fetching from the pubmed database, and from really any database you want to extract from NCBI.**
 
 * **For the preprocessing section, I'm going to use the _tidyr_ and _dplyr_ packages. These are great packages for making a [tidy](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html) dataframe for reliable analysis.**
 
-* **For the bayes classification portion, I'm going to draw heavily from [here](http://mlbernauer.github.io/R/20160319-naive-bayes-information-retrieval.html). Bayes classification, in brief, calculates probabilities of features towards observations based on what's already been seen. I'm going to explain this concept in the section.**
+* **For the bayes classification portion, I'm going to draw heavily from [here](http://mlbernauer.github.io/R/20160319-naive-bayes-information-retrieval.html). Bayes classification, in brief, calculates probabilities of features towards observations based on what's already been seen. I'm going to explain this concept a bit more in this section but the link is a great explanation as well, probably more so.**
+
 
 **The outcome of this notebook will be:**
 
@@ -30,13 +49,18 @@ output:
 
 **3. Generate a Naive Bayes Classifier to calculate the probability of an author given a topic or a phrase.**
 
+
 # Disclaimer
 
-**I am not claiming this to be an original analysis or have this be my original code. I am truly standing on the shoulders of giants-I give credit where credit is due. In the case I mistakenly don't, I apologize, and please let me know about it so I can give rigthtful credit!**
+
+**I am not claiming this to be an original analysis or have this be my original code. I am truly standing on the shoulders of giants-I give credit where credit is due. In the case I mistakenly don't, I apologize, and please let me know about it so I can give due credit!**
+
 
 # Extracting Pubmed articles from Columbia University
 
+
 **I'm retrieving (hopefully) all records with atleast one author with a Columbia University in New York City affiliation.**
+
 ```{r,eval=F}
 
 suppressMessages( library(RISmed) )
@@ -54,13 +78,16 @@ summary(search_query)
 records<- EUtilsGet(search_query)
 ```
 
+
 # Preprocessing pubmed records for reliable downstream analysis
+
 
 **Now I have to parse to get the author with the right affiliation.**
 
-**Basically the _records_ object is a Medline class where the Author, Affiliation, Abstract and other keys can be extracted. Since I'm interested in authors just from columbia, I want to get the Columbia authors, and also the article abstract. So looks like I'll have to:**
 
-**1. Figure out which authors in an articvle are from columbia.**
+**Basically the _records_ object is a Medline class where the Author, Affiliation, Abstract and other keys can be extracted. Since I'm interested in authors just from Columbia, I want to get the Columbia authors, and also the article abstract. So looks like I'll have to:**
+
+**1. Figure out which authors in an article are from Columbia.**
 
 **2. Then put those authors and the article's abstract in a dataframe.**
 
@@ -119,7 +146,7 @@ head(pubmed_raw)
 
 **And now I'll process this and save for use later.**
 
-**First I'll load some helper vfunctions,**
+**First I'll load some helper functions:**
 
 ```{r}
 
@@ -159,7 +186,7 @@ pubmed_df$Abstract = sapply(pubmed_df$Abstract, function(x){
 head(pubmed_df)
 ```
 
-**Now we separate out the words in the abstract so each word will be treated as an observation and associated to an author.**
+**Now I'm separating out the words in the abstract so each word will be treated as an observation and associated to an author.**
 
 ```{r,eval=F}
 
@@ -181,7 +208,7 @@ write_tsv(pubmed_df_unnest,"~/test/columbia_authors_tokenizedabstracxts.txt")
 
 **Here I'm just loading the processed dataframe for use in the notebook. I'm just removing the need to do all the downloading and processing steps when I compile this notebook :)**
 
-**It's a huge file (4.8Gbs)! I'm going to indicate the column type and names, which might actually help load it in faster.**
+**It's a huge file (4.8Gbs)! I'm going to indicate the column names, which might actually help load it in faster. Still, I think loading a 5 GB file in around a minute is fast! But then again I don't have very good benchmarks to compare :P**
 
 ```{r}
 
@@ -194,11 +221,12 @@ pubmed_df_unnest <- read_tsv(
 
 ```
 
-**In the online rmarkdown, I'm leaving the read and write code chunks as not evaluated and evaluating the chunks above those so then you can use _knitr_ to compile the rmarkdown.**
 
 # Naive Bayes Classifier
 
+
 **After we preprocessed the pubmed data, now we can calculate the probabilities. Much inspiration and code for this post came from [here](http://mlbernauer.github.io/R/20160319-naive-bayes-information-retrieval.html).**
+
 
 **In brief, each row in our dataframe, _pubmed_df_unnest_, is an observation. Each column is a feature associated to the observations. Those features include:**
 
@@ -208,7 +236,7 @@ pubmed_df_unnest <- read_tsv(
 
 * **The affiliation of the author-this will tell me what department they were or are from. I can use this feature for filteringh later on.**
 
-* **And a word within the abstract (the assumption is the collection of words in an article's abstract will give evidence for what the associated author's expertise is in)**
+* **A word within the abstract (the assumption is the collection of words in an article's abstract will give evidence for what the associated author's expertise is in)**
 
 
 ```{r}
@@ -234,7 +262,9 @@ prob_data <- get_prob_data(train_data)
 head(prob_data, 3)
 ```
 
+
 **To get the joint probability of each author for the features, we have to multiply the log probabilities. Unfortunately if we do that, we will certainly suffer from underflow, meaning R will have trouble storing the very, _very_ small numbers. That's why we take the log-this allows us to sum the log probabilities and thus avoid underflow. Additionally, since we don't just want to associate known terms to authors but also include probabilities for terms unobserved for authors. To do this, we will simply use the mean log probability for all terms averaged over all authors.**
+
 
 ```{r}
 # function for returning the ranked classes for a text
@@ -253,9 +283,12 @@ naive_bayes = function(text, data, k=10, pseudo_prob = 1e-10){
 
 **Now we have a function that will return a ranked list of authors given a text. Ok, let's predict potential committee members!**
 
+
 # Give me a ranking of most probable authors for a Topic or Phrase
 
+
 **So first, I want to see if I can pick up authors that I know. So let me see if I can get them in my ranking.**
+
 
 **I generally know what my current PI and members in my lab publish on, so let me see if I can get them in a high ranking.**
 
@@ -268,27 +301,37 @@ naive_bayes(terms, prob_data, k=10)
 
 ```
 
+
 **Cool! I know most of these people so this is pretty accurate in terms of what they publish on.**
+
 
 **So let's say I want people who have expertise in genomics and bioinformatics and things like that:**
 
+
 ```{r}
 
-terms <- 'genomics bioinformatics analysis'
+terms <- 'genomics bioinformatics mechanisms network computational statistical'
 
 naive_bayes(terms, prob_data, k=10)
 
 ```
 
-**Great! Now I can look more into asking Andrea Califano, Raul Rabadan or Xiadong Wang to see if they'd be a good fit on my committees.**
+
+**Great! Now I can look more into asking Andrea Califano, Raul Rabadan or Xiadong Wang to see if they'd be a good fit on my committees. Another point I want to make-this is a great way to learn about who publishes well in an area i.e. I didn't know who Xiadong Wang was but now I may take a look at his publications and research more on depth!**
+
 
 **There are a lot of caveats to this, and I try to address them in the next section. But, this gives me a great place in looking for people with expertise in subjects that would be good to have on my committees.**
 
+
+**This is a great tool for finding people who published a lot in a certain area. This can be useful for finding domain experts in general.**
+
+
 # Caveats and Future Work
+
 
 **I welcome feedback! In this section I try to address the many caveats in the above analysis:**
 
-* **I am biasing towards those that publish a lot.**
+* **I am biasing towards those that publish a lot compared to new PIs or PIs who transferred from other universities.**
 
 * **A positive from that is I can more probably pick up PIs because they have more publications than lab members, generally. A negative is I'm not specifically picking up people that are presently at Columbia, or necessarily publishing more or less exclusively in the field I'm looking for.**
 
@@ -298,17 +341,21 @@ naive_bayes(terms, prob_data, k=10)
 
 * **Some authors use slightly different affiliations in different articles. This is another confounder for attributing an author with a unique affiliation.**
 
+
 ## Refining my model for the question at hand
+
 
 **For removing bad instances, and for obtaining authors that are at Columbia presently and are actual PIs of labs, I need to do some filtering.**
 
-**The best way to start is to change my naive bayes function so that:**
+
+**The best way to start is modifying the analysis so that:**
 
 * **I get to see their Affiliation-this will help me see the distribution of departments represented and select authors from particular departments.**
 
 * **I get to see their order in the contributing authors. If their close to last in the author list, they're more probably a PI of a lab.**
 
 * **It's still going to be hard to figure out which authors are still at Columbia. It will be the case where authors moved on to industry to other universities. However, those that publish a lot, who will be ranked high, will more likely still be at Columbia rather than be students or post-docs that probably moved on.**
+
 
 **First, let's remove "NA, NA" authors after classification (there's only one),**
 
@@ -321,13 +368,14 @@ naive_bayes(terms, prob_data, k=10) %>%
 
 ```
 
-**Now I can add Affiliation and the other Author features. I want to do this because I can get out PIs and filter out students or post-docs. In the example above, "Tatonetti, NP" is actually the PI of my [lab](tatonettilab.org) and "Lorberbaum, T" was a lab [member](http://tal.bio). I'm not sure how prevelant this  is, but maybe extra filtering will help me out with getting to my question.**
+
+**Now I can add Affiliation and the other Author features. I want to do this because I can, hopefully, extract out PIs and filter out students or post-docs. In the example above, "Tatonetti, NP" is actually the PI of my [lab](tatonettilab.org) and "Lorberbaum, T" was a lab [member](http://tal.bio). I'm not sure how prevelant this is, but maybe extra filtering will help me out with getting to my question.**
 
 **We'll use some handy-dandy join functions from _dplyr_. Because we'll get a lot of duplicates from the join, we want to do some filtering:**
 
 * **We don't want the Abstract field**
 
-* **Different articles will have an author be in a different position in the author list. Maybe filter for when the author is close to the end, so we can be more sure to get PIs.**
+* **Different articles will have an author be in a different position in the author list. Maybe filtering for when the author is close to the end we can be more sure to get PIs.**
 
 * **Because of slight deviations in the affiliation, maybe we can group affiliations by author and then get those words that are unique.**
 
@@ -337,15 +385,60 @@ naive_bayes(terms, prob_data, k=10) %>%
 terms <- 'systems drugs side effects pipeline mechanisms'
 
 
-naive_bayes(terms, prob_data, k=10) %>% 
+tmp1 <- naive_bayes(terms, prob_data, k=100) %>% 
   filter( !(Author == "NA, NA") ) %>% 
   left_join(pubmed_df_unnest , by = c("Author" = "Author") ) %>% 
-  mutate(Author_Mean = mean(
+  mutate(Author_Median = median(
                             as.numeric(Tot_Authors) - as.numeric(Author_Order),
                             na.rm=T) 
         ) %>% 
-  select(Author, score, Author_Mean,Affiliation) %>% 
+  select(Author, score, Author_Median , Affiliation) %>% 
   distinct()
+
+tmp2 <- aggregate(. ~ Author, tmp1, paste0)
+
+tmp3 <- tmp2
+
+tmp3$score <- sapply(tmp2$score,
+                     function(x){
+                                sum( as.numeric( unique(x) ) )
+                                })
+
+tmp3$Author_Median <- sapply(tmp2$Author_Median,
+                     function(x){
+                                median( as.numeric( unique(x) ) )
+                                })
+
+tmp3$Affiliation <- sapply(tmp2$Affiliation,function(x){
+                                unique(
+                                  strsplit( paste0(x , collapse=","),",")[[1]]
+                                )
+                                })
+
+tmp3 %>%
+  arrange(desc(score)) %>% 
+  head()
 ```
 
+**The affiliation tokens are kind of messy...but they still work for what we want to do: basically query which columbia department authors are in.**
 
+**Also, I don't really know what to do with the Author_Median feature...I thought it would help distinguish young verse senior authors. It' not very informative right now.**
+
+**But now maybe I can filter out for specific departments:**
+
+```{r}
+
+tmp3 %>% 
+  select(Author, score, Affiliation, contains("department of biomedical informatics") ) %>% 
+  arrange(desc(score)) %>% 
+  head()
+
+```
+
+**It seems getting out Authors from certain departments is tough...there's so many tokens in affiliation it's impossible to single out authors by department name since the affiliation contains centers and and institutes etc.**
+
+**It seems for this tutorial the top n authors, filtering out the "NA, NA" authors, and providing enough terms for specificity will be the most useful in extracting authors with high publishing rates associated to the terms. It's unfortunate that there's such a strong bias towards those who published a lot and a bias against new faculty.**
+
+**Another point of future work will be to refine the pubmed search query to include only certain department instead of all of Columbia. This might be helpful in making the analysis more precise.**
+
+**In the end, it seems most prudent to use this classification for getting high expertise, senior authors on a topic. But overall, this was a fun weekend project (as well as putting this up as my first blog post)!**
