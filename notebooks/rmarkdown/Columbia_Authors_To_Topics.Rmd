@@ -369,7 +369,7 @@ naive_bayes(terms, prob_data, k=10) %>%
 ```
 
 
-**Now I can add Affiliation and the other Author features. I want to do this because I can, hopefully, extract out PIs and filter out students or post-docs. In the example above, "Tatonetti, NP" is actually the PI of my [lab](tatonettilab.org) and "Lorberbaum, T" was a lab [member](http://tal.bio). I'm not sure how prevelant this is, but maybe extra filtering will help me out with getting to my question.**
+**Now I can add Affiliation and the other Author features. I want to do this because I can, hopefully, extract out PIs and filter out students or post-docs. In the example above, "Tatonetti, NP" is actually the PI of my [lab](http://www.tatonettilab.org) and "Lorberbaum, T" was a lab [member](http://tal.bio). I'm not sure how prevelant this is, but maybe extra filtering will help me out with getting to my question.**
 
 **We'll use some handy-dandy join functions from _dplyr_. Because we'll get a lot of duplicates from the join, we want to do some filtering:**
 
