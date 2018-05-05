@@ -5,19 +5,32 @@ from textwrap import dedent
 
 app = dash.Dash()
 
-app.layout = html.Div(
+app.layout = html.Div([
 
-	style={'background-color' : 'rgb(200,200,200)',
-	        'font-size' : 11,
-	        'font-family' : 'Verdana'
+    dcc.Location(id='url', refresh=True),
+    html.Div(id='page-content')
+	
+])	
+	
+	
+index_page = html.Div(
+	
+	style={'font-family' : 'Verdana'
 	        },
 	children=[
 
-		html.H1('Visualizing Drug Safety Data in a Web Framework: Interacting with, understanding, and communicating using just Python (no javascript, html, or css)',
-			style={'text-align' : 'center'}
+		html.H1('Visualizing Drug Safety Data in a Web Framework: Interacting with, understanding, and communicating using Python',
+			style={'text-align' : 'center','font-size' : 48}
 			),
 
 		html.Hr(),
+
+		dcc.Link('Go to Talk Outline', href='/outline',style={'font-size' : 16,'color' : 'blue'})
+])
+
+outline = html.Div([
+
+		dcc.Link('Go to Home Page', href='/',style={'font-size' : 16,'color' : 'blue'}),
 
 		dcc.Markdown(dedent('''
 
@@ -64,7 +77,24 @@ app.layout = html.Div(
 			   * Show app
 			''')
 			)
+
 ])
+
+
+# Update the index
+# This callback constantly looks at the page location with id="url",
+# and gives the pathname to the function immediately following the callback.
+# The function then gives what it returns, which is a new layout.
+# That new layout itself has a url! So the new url is displayed
+# Every time we click the link, the pathname changes (href) and we get returned the 
+# corresponding page. 
+@app.callback(dash.dependencies.Output('page-content', 'children'),
+              [dash.dependencies.Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/outline':
+        return outline
+    else:
+        return index_page
 
 if __name__ == '__main__':
 	app.run_server(debug=True)
