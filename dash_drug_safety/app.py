@@ -52,17 +52,37 @@ outline = html.Div([
 
 			      * Shiny doesn't render very quick, Dash does.
 
-			- What is Dash
+			- [What is Dash](https://medium.com/@plotlygraphs/introducing-dash-5ecf7191b503)
+
+			   + Python framework for building analytical web applications, no javascript required.
+
+			   + 3 years old - announced last June.
+
+			   + Open source and MIT licensed.
+
+			   + declarative and reactive
+
+			   + reactive decorators create the reactivity behind the app. It's always "on".
 
 			- What makes Dash
 
-			   + Flask and React
+			   + Flask (communicates json packets over http requests), Plotly.js (built on top of D3, renders charts), and React (renders components)
+
+			   + Other Flask Plugins can be used too. 
+
+			   + Can use the full power of CSS. 
 
 			   + two components: 
 
 			      * wrap html in python. The full power of css is available to you
 
 			      * core components, like Graphs and Tables and Dropdowns.
+
+			   + Dash components are Python classes that encode the properties and values of a specific React component and that serialize to JSON. Uses dynamic programming to automatically generate the standard Python classes from annotated React propTypes. Get automatic argument validation, docstrings, and more. 
+
+			   + Not limited to using only the standard Dash components library - can port a React.js components into a python class that can be [used by Dash](https://plot.ly/dash/plugins). 
+
+
 
 			- What can you do with it?
 
@@ -75,6 +95,7 @@ outline = html.Div([
 			   * Walk through components/parts I use (show code)
 
 			   * Show app
+			   
 			''')
 			)
 
