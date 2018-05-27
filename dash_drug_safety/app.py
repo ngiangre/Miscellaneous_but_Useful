@@ -1,9 +1,31 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
+
 from textwrap import dedent
+from pyarrow import feather
+import numpy as np
+
 
 app = dash.Dash()
+app.config.suppress_callback_exceptions = True
+
+#####load data#####
+
+data = feather.read_feather(source='/Users/npg2108/Research/Projects/pediatrics/data/20180214_aeolous_stats.tsv.feather',nthreads=16,columns=['drug_concept_name','aed','age_cat'])
+
+uniq_drugs = data.query('aed == "AED"').drug_concept_name.unique()
+uniq_drugs = uniq_drugs[np.argsort(uniq_drugs)]
+
+all_age_cat_counts = (data.groupby(['age_cat'])
+						  .apply(lambda x : x.shape[0])
+					 )
+all_age_cat_counts_x = all_age_cat_counts.index.tolist()
+all_age_cat_counts_y = all_age_cat_counts.values
+all_age_cat_counts_y_norm = np.round((all_age_cat_counts_y / all_age_cat_counts.sum()) * 100,0)
+##########
+
 
 app.layout = html.Div([
 
@@ -23,10 +45,36 @@ index_page = html.Div(
 			style={'text-align' : 'center','font-size' : 48}
 			),
 
+		dcc.Link('Go to Talk Outline', href='/outline',
+			style={'font-size' : 16,'color' : 'blue','left' : '50%',
+			'width' : '20%'}),
+
 		html.Hr(),
 
-		dcc.Link('Go to Talk Outline', href='/outline',style={'font-size' : 16,'color' : 'blue'})
-])
+		html.Div(
+			style={'class' : "col-sm-4",'border' : '2px solid black',
+			'float' : 'left'},
+			children=[
+			
+			html.H1('How many patients are taking these drugs?',
+				style={'text-align' : 'center','font-size' : 18}),
+			
+			dcc.Dropdown(
+				id='drug_count',
+				options=[{'label' : i, 'value' : i} for i in uniq_drugs],
+				value=uniq_drugs[0]),
+
+    		html.Div(id='drug_output',
+    			style={'text-align' : 'center'})
+
+			]),
+
+		dcc.Graph(
+	        id='drug-reports-at-ages',
+	        style={'class' : 'col-sm-4','float' : 'right'},
+		)
+	]
+)
 
 outline = html.Div([
 
@@ -109,13 +157,85 @@ outline = html.Div([
 # That new layout itself has a url! So the new url is displayed
 # Every time we click the link, the pathname changes (href) and we get returned the 
 # corresponding page. 
-@app.callback(dash.dependencies.Output('page-content', 'children'),
+@app.callback(
+	dash.dependencies.Output('page-content', 'children'),
               [dash.dependencies.Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/outline':
         return outline
     else:
         return index_page
+
+
+#Show number of patients taking selected drug in dataset
+@app.callback(
+    dash.dependencies.Output('drug_output', 'children'),
+    [dash.dependencies.Input('drug_count', 'value')])
+def callback_drug(value):
+    return 'There are {} patients that reported taking {}'.format(
+    	data.query('drug_concept_name==@value').count().values[0],
+    	value)
+
+#Update bar graph for drug
+@app.callback(
+	dash.dependencies.Output('drug-reports-at-ages','figure'),
+	[dash.dependencies.Input('drug_count','value')])
+def callback_drug_reports_at_ages_bars(value):
+
+	series = (data.query('drug_concept_name == @value')
+						   .groupby(['age_cat'])
+						   .apply(lambda x : x.shape[0])
+						   )
+	x = series.index.tolist()
+	y = series.values
+	y_norm = np.round((series.values / series.sum()) * 100,0)
+
+	drug_trace = go.Bar(
+		                x=x,
+		                y=y_norm,
+		                name='{}'.format(value),
+		                text=['{} reports'.format(i) for i in y],
+		                marker=go.Marker(
+		                    color='rgb(55, 83, 109)'
+		                )
+		            )
+
+	all_trace = go.Bar(
+		                x=all_age_cat_counts_x,
+		                y=all_age_cat_counts_y_norm,
+		                name='All drugs',
+		                text=['{} reports'.format(i) for i in all_age_cat_counts_y],
+		                marker=go.Marker(
+		                    color='rgb(180,180,180)'
+		                )
+		            )
+	return { 'data' : [
+		            all_trace,drug_trace
+		            ],
+	            'layout' : go.Layout(
+		            title='Patients taking {} at different age intervals'.format(value),
+		            showlegend=True,
+		            yaxis = dict(
+		            	title="Percentage of reports",
+		            	type='percent'
+		            ),
+		            xaxis = dict(
+		            	title="Age category"
+		            ),
+		            legend=go.Legend(
+		                x=0,
+		                y=1.0
+		            ),
+		            margin=go.Margin(l=40, r=20, t=40, b=100)
+	        	)
+			}
+
+#enable bootstrap styling
+external_css = ["https://bootswatch.com/3/paper/bootstrap.css"]
+
+for css in external_css:
+    app.css.append_css({"external_url": css})
+
 
 if __name__ == '__main__':
 	app.run_server(debug=True)
