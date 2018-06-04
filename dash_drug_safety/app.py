@@ -24,6 +24,7 @@ all_age_cat_counts = (data.groupby(['age_cat'])
 all_age_cat_counts_x = all_age_cat_counts.index.tolist()
 all_age_cat_counts_y = all_age_cat_counts.values
 all_age_cat_counts_y_norm = np.round((all_age_cat_counts_y / all_age_cat_counts.sum()) * 100,0)
+
 ##########
 
 
@@ -44,6 +45,39 @@ index_page = html.Div(
 		html.H1('Visualizing Drug Safety Data in a Web Framework: Interacting with, understanding, and communicating using Python',
 			style={'text-align' : 'center','font-size' : 48}
 			),
+
+		dcc.Link('Go to Talk Outline', href='/outline',
+			style={'font-size' : 16,'color' : 'blue','left' : '50%',
+			'width' : '20%'}),
+
+		html.Br(),
+
+		dcc.Link('Go to Second Page', href='/second_page',
+			style={'font-size' : 16,'color' : 'blue','left' : '50%',
+			'width' : '20%'}),
+
+		html.Hr(),
+
+		dcc.Markdown(dedent('''
+
+			**Academic researchers extensively curate datasets that are of interest to the general public. Often, these data and results from research projects using this data appear in Academic journals as publications, which are the main modes of research communication, funding eligibility, and career advancement. However, research publications are esoteric and are not feasible for widespread communication to the public. Thus, there requires a medium that allows for general communication of research results, along with scholarly communication in peer-reviewed journals.**
+
+			**Dash, from Plotly, is a web framework for interacting and communicating data using python. This app uses Dash to communicate and make interactive data curated from the Federal Drug Administration's Adverse Event Reporting System.**
+
+			''')
+		)
+
+	]
+)
+
+second_page = html.Div([
+
+		html.H1('Second Page'),
+
+		dcc.Link('Go to Home Page', href='/',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
 
 		dcc.Link('Go to Talk Outline', href='/outline',
 			style={'font-size' : 16,'color' : 'blue','left' : '50%',
@@ -73,12 +107,22 @@ index_page = html.Div(
 	        id='drug-reports-at-ages',
 	        style={'class' : 'col-sm-4','float' : 'right'},
 		)
-	]
-)
+
+		])
+
 
 outline = html.Div([
 
-		dcc.Link('Go to Home Page', href='/',style={'font-size' : 16,'color' : 'blue'}),
+		dcc.Link('Go to Home Page', href='/',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+		
+		dcc.Link('Go to Second Page', href='/second_page',
+			style={'font-size' : 16,'color' : 'blue','left' : '50%',
+			'width' : '20%'}),
+
+		html.Hr(),
 
 		dcc.Markdown(dedent('''
 
@@ -163,6 +207,8 @@ outline = html.Div([
 def display_page(pathname):
     if pathname == '/outline':
         return outline
+    if pathname == '/second_page':
+    	return second_page
     else:
         return index_page
 
