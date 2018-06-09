@@ -1,17 +1,19 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table_experiments as dt
 import plotly.graph_objs as go
 
 from textwrap import dedent
 from pyarrow import feather
 import numpy as np
+import pandas as pd
 
 
 app = dash.Dash()
 app.config.suppress_callback_exceptions = True
 
-#####load data#####
+#####load and process data#####
 
 data = feather.read_feather(source='/Users/npg2108/Research/Projects/pediatrics/data/20180214_aeolous_stats.tsv.feather',nthreads=16,columns=['drug_concept_name','aed','age_cat'])
 
@@ -25,15 +27,18 @@ all_age_cat_counts_x = all_age_cat_counts.index.tolist()
 all_age_cat_counts_y = all_age_cat_counts.values
 all_age_cat_counts_y_norm = np.round((all_age_cat_counts_y / all_age_cat_counts.sum()) * 100,0)
 
+
 ##########
 
 
-app.layout = html.Div([
+app.layout = html.Div(
 
-    dcc.Location(id='url', refresh=True),
-    html.Div(id='page-content')
-	
-])	
+	children=[
+
+		dcc.Location(id='url', refresh=True),
+		html.Div(id='page-content')
+		]
+	)	
 	
 	
 index_page = html.Div(
@@ -46,13 +51,17 @@ index_page = html.Div(
 			style={'text-align' : 'center','font-size' : 48}
 			),
 
-		dcc.Link('Go to Talk Outline', href='/outline',
-			style={'font-size' : 16,'color' : 'blue','left' : '50%',
-			'width' : '20%'}),
+		dcc.Link('Go to ADR table Page', href='/table_page',
+			style={'font-size' : 16,'color' : 'blue'}),
 
 		html.Br(),
 
-		dcc.Link('Go to Second Page', href='/second_page',
+		dcc.Link('Go to ADR age relation Page', href='/age_page',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+
+		dcc.Link('Go to Talk Outline', href='/outline',
 			style={'font-size' : 16,'color' : 'blue','left' : '50%',
 			'width' : '20%'}),
 
@@ -64,17 +73,52 @@ index_page = html.Div(
 
 			**Dash, from Plotly, is a web framework for interacting and communicating data using python. This app uses Dash to communicate and make interactive data curated from the Federal Drug Administration's Adverse Event Reporting System.**
 
-			''')
-		)
+			'''))
+		]
+	)
 
-	]
-)
 
-second_page = html.Div([
+table_page = html.Div(
 
-		html.H1('Second Page'),
+	style={},
+
+	children=[
+
+		html.H1('Table Page'),
 
 		dcc.Link('Go to Home Page', href='/',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+
+		dcc.Link('Go to ADR age relation Page', href='/age_page',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+
+		dcc.Link('Go to Talk Outline', href='/outline',
+			style={'font-size' : 16,'color' : 'blue','left' : '50%',
+			'width' : '20%'}),
+
+		html.Hr()
+		]
+	),
+
+
+age_page = html.Div(
+
+	style={},
+
+	children=[
+
+		html.H1('ADR age relation'),
+
+		dcc.Link('Go to Home Page', href='/',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+
+		dcc.Link('Go to ADR table Page', href='/table_page',
 			style={'font-size' : 16,'color' : 'blue'}),
 
 		html.Br(),
@@ -108,19 +152,28 @@ second_page = html.Div([
 	        style={'class' : 'col-sm-4','float' : 'right'},
 		)
 
-		])
+		]
+	)
 
 
-outline = html.Div([
+outline = html.Div(
+
+	style={},
+
+	children=[
 
 		dcc.Link('Go to Home Page', href='/',
 			style={'font-size' : 16,'color' : 'blue'}),
 
 		html.Br(),
-		
-		dcc.Link('Go to Second Page', href='/second_page',
-			style={'font-size' : 16,'color' : 'blue','left' : '50%',
-			'width' : '20%'}),
+
+		dcc.Link('Go to ADR table Page', href='/table_page',
+			style={'font-size' : 16,'color' : 'blue'}),
+
+		html.Br(),
+
+		dcc.Link('Go to ADR age relation Page', href='/age_page',
+			style={'font-size' : 16,'color' : 'blue'}),
 
 		html.Hr(),
 
@@ -190,8 +243,8 @@ outline = html.Div([
 			   
 			''')
 			)
-
-])
+		]
+	)
 
 
 # Update the index
@@ -207,8 +260,10 @@ outline = html.Div([
 def display_page(pathname):
     if pathname == '/outline':
         return outline
-    if pathname == '/second_page':
-    	return second_page
+    if pathname == '/table_page':
+    	return table_page
+    if pathname == '/age_page':
+    	return age_page
     else:
         return index_page
 
