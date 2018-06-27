@@ -3,3 +3,13 @@ dir for NYHAIS talk June 2018
 by Nick Giangreco
 
 /anaconda/envs/py3/bin/python3 app.py
+
+The app won't run because the dataset is a couple Gbs and GitHub won't host that :/ I hope the screenshots are enticing!
+
+![HomePage](imgs/HomePage.png)
+
+![ADR-age Page](imgs/ADRagePage.png)
+
+![TablePage](imgs/TablePage.png)
+
+![TalkOutlinePage](imgs/TalkOutlinePage.png)
